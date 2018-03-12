@@ -2,6 +2,7 @@ import fs from 'fs';
 import _ from 'lodash';
 import path from 'path';
 import yaml from 'js-yaml';
+import ini from 'ini';
 
 const parseMethods = {
   '.json': {
@@ -9,6 +10,9 @@ const parseMethods = {
   },
   '.yaml': {
     parse: yaml.safeLoad,
+  },
+  '.ini': {
+    parse: ini.parse,
   },
 };
 

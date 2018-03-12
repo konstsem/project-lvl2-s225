@@ -21,3 +21,14 @@ test('gendiff step3 (yaml)', () => {
   + script: make lint test
 }`);
 });
+
+test('gendiff step4 (ini)', () => {
+  expect(gendiff('__tests__/__fixtures__/before.ini', '__tests__/__fixtures__/after.ini'))
+    .toBe(`{
+    scope: local
+  + timeout: 20
+  - timeout: 50
+    proxy: 123.234.53.22
+  + verbose: true
+}`);
+});
