@@ -1,0 +1,52 @@
+{
+  "name": "gendiff_ks2",
+  "version": "0.0.1",
+  "description": "Second project by Hexlet (frontend)",
+  "main": "dist/index.js",
+  "bin": {
+    "gendiff": "dist/bin/gendiff.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "jest",
+    "babel-node": "babel-node",
+    "build": "NODE_ENV=production babel src --out-dir dist --source-maps inline",
+    "prepublishOnly": "npm run build",
+    "eslint": "eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/konstsem/project-lvl2-s217.git"
+  },
+  "author": "konstsem",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/konstsem/project-lvl2-s217/issues"
+  },
+  "jest": {
+    "watchPathIgnorePatterns": [
+      "<rootDir>/__tests__/__fixtures__"
+    ],
+    "testEnvironment": "node"
+  },
+  "homepage": "https://github.com/konstsem/project-lvl2-s217#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^8.0.2",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "eslint": "^4.11.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jest": "^21.7.0",
+    "jest": "^22.1.4",
+    "jest-cli": "^22.1.4"
+  },
+  "dependencies": {
+    "commander": "^2.13.0",
+    "lodash": "^4.17.5"
+  }
+}
