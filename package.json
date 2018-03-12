@@ -18,12 +18,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/konstsem/project-lvl2-s217.git"
+    "url": "git+https://github.com/konstsem/project-lvl2-s225.git"
   },
   "author": "konstsem",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/konstsem/project-lvl2-s217/issues"
+    "url": "https://github.com/konstsem/project-lvl2-s225/issues"
   },
   "jest": {
     "watchPathIgnorePatterns": [
@@ -31,7 +31,7 @@
     ],
     "testEnvironment": "node"
   },
-  "homepage": "https://github.com/konstsem/project-lvl2-s217#readme",
+  "homepage": "https://github.com/konstsem/project-lvl2-s225#readme",
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",

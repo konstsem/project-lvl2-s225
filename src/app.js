@@ -6,6 +6,6 @@ program
   .description('Compares two configuration files and shows a difference.')
   .option('-V, --version', 'output the version number')
   .option('-f, --format [type]', 'Output format')
-  .action((file1, file2) => console.log(gendiff(file1, file2)));
+  .action((firstConfig, secondConfig) => console.log(gendiff(firstConfig, secondConfig)));
 
 export default () => program.parse(process.argv);
