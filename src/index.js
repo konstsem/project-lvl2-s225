@@ -1,5 +1,17 @@
 import fs from 'fs';
 import _ from 'lodash';
+import path from 'path';
+import yaml from 'js-yaml';
+
+const parseMethods = {
+  '.json': {
+    parse: JSON.parse,
+  },
+  '.yaml': {
+    parse: yaml.safeLoad,
+  },
+};
+
 
 const toStr = (key, before, after) => {
   if (!after[key]) {
@@ -13,10 +25,14 @@ const toStr = (key, before, after) => {
 };
 
 export default (fileBefore, fileAfter) => {
-  const contentBefore = fs.readFileSync(fileBefore);
-  const contentAfter = fs.readFileSync(fileAfter);
-  const parsedBefore = JSON.parse(contentBefore);
-  const parsedAfter = JSON.parse(contentAfter);
+  const fileTypeBefore = path.extname(fileBefore);
+  const fileTypeAfter = path.extname(fileAfter);
+  const contentBefore = fs.readFileSync(fileBefore, 'utf8');
+  const contentAfter = fs.readFileSync(fileAfter, 'utf8');
+  // const parsedBefore = JSON.parse(contentBefore);
+  // const parsedAfter = JSON.parse(contentAfter);
+  const parsedBefore = parseMethods[fileTypeBefore].parse(contentBefore);
+  const parsedAfter = parseMethods[fileTypeAfter].parse(contentAfter);
   const unitedKeys = _.union(Object.keys(parsedBefore), Object.keys(parsedAfter));
   return `{\n${unitedKeys.map(key => toStr(key, parsedBefore, parsedAfter)).join('\n')}\n}`;
 };

@@ -1,6 +1,6 @@
 {
   "name": "gendiff_ks2",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Second project by Hexlet (frontend)",
   "main": "dist/index.js",
   "bin": {
@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "commander": "^2.13.0",
+    "js-yaml": "^3.11.0",
     "lodash": "^4.17.5"
   }
 }

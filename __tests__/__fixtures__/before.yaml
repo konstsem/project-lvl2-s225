@@ -1,0 +1,6 @@
+language: node_js
+
+node_js:
+  - last
+
+script3: make start
