@@ -3,40 +3,89 @@ import _ from 'lodash';
 import path from 'path';
 import yaml from 'js-yaml';
 import ini from 'ini';
+// import Node from './Node';
 
-const parseMethods = {
-  '.json': {
-    parse: JSON.parse,
-  },
-  '.yaml': {
-    parse: yaml.safeLoad,
-  },
-  '.ini': {
-    parse: ini.parse,
-  },
+const parsers = {
+  '.json': JSON.parse,
+  '.yaml': yaml.safeLoad,
+  '.ini': ini.parse,
 };
 
+// const isObject = value => value instanceof Object;
 
-const toStr = (key, before, after) => {
-  if (!after[key]) {
-    return `  - ${key}: ${before[key]}`;
-  } else if (!before[key]) {
-    return `  + ${key}: ${after[key]}`;
-  } else if (before[key] !== after[key]) {
-    return `  + ${key}: ${after[key]}\n  - ${key}: ${before[key]}`;
-  }
-  return `    ${key}: ${before[key]}`;
-};
+const statuses = [
+  // {
+  //   status: 'hasChildren',
+  //   check: (before, after) => isObject(before) && isObject(after),
+  // },
+  {
+    status: 'inserted',
+    check: (before, after) => !before && after,
+    build: (valueBefore, valueAfter) => valueAfter,
+  },
+  {
+    status: 'deleted',
+    check: (before, after) => before && !after,
+    build: valueBefore => valueBefore,
+  },
+  {
+    status: 'changed',
+    check: (before, after) => before !== after,
+    build: (valueBefore, valueAfter) => ({
+      before: valueBefore,
+      after: valueAfter,
+    }),
+  },
+  {
+    status: 'unchanged',
+    check: (before, after) => before === after,
+    build: valueBefore => valueBefore,
+  },
+];
+
+const renders = [
+  {
+    status: 'inserted',
+    render: node => `  + ${node.key}: ${node.value}`,
+  },
+  {
+    status: 'deleted',
+    render: node => `  - ${node.key}: ${node.value}`,
+  },
+  {
+    status: 'changed',
+    render: node =>
+      `  + ${node.key}: ${node.value.after}\n  - ${node.key}: ${node.value.before}`,
+  },
+  {
+    status: 'unchanged',
+    render: node => `    ${node.key}: ${node.value}`,
+  },
+
+];
+const buildAst = (keys, objectBefore, objectAfter) =>
+  keys.map((key) => {
+    const { status, build } = _.find(statuses, ({ check }) =>
+      check(objectBefore[key], objectAfter[key]));
+    const value = build(objectBefore[key], objectAfter[key]);
+    return { key, status, value };
+  });
+
+const renderAst = ast => ast.map((node) => {
+  const { render } = _.find(renders, ({ status }) => status === node.status);
+  return render(node);
+}).join('\n');
 
 export default (fileBefore, fileAfter) => {
   const fileTypeBefore = path.extname(fileBefore);
   const fileTypeAfter = path.extname(fileAfter);
   const contentBefore = fs.readFileSync(fileBefore, 'utf8');
   const contentAfter = fs.readFileSync(fileAfter, 'utf8');
-  // const parsedBefore = JSON.parse(contentBefore);
-  // const parsedAfter = JSON.parse(contentAfter);
-  const parsedBefore = parseMethods[fileTypeBefore].parse(contentBefore);
-  const parsedAfter = parseMethods[fileTypeAfter].parse(contentAfter);
+  const parsedBefore = parsers[fileTypeBefore](contentBefore);
+  const parsedAfter = parsers[fileTypeAfter](contentAfter);
   const unitedKeys = _.union(Object.keys(parsedBefore), Object.keys(parsedAfter));
-  return `{\n${unitedKeys.map(key => toStr(key, parsedBefore, parsedAfter)).join('\n')}\n}`;
+  const ast = buildAst(unitedKeys, parsedBefore, parsedAfter);
+  // console.log(ast);
+  // console.log(parsedBefore);
+  return `{\n${renderAst(ast)}\n}`;
 };
