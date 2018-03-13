@@ -43,7 +43,7 @@ const statuses = [
   },
 ];
 
-const renders = [
+const renderers = [
   {
     status: 'inserted',
     render: node => `  + ${node.key}: ${node.value}`,
@@ -72,7 +72,7 @@ const buildAst = (keys, objectBefore, objectAfter) =>
   });
 
 const renderAst = ast => ast.map((node) => {
-  const { render } = _.find(renders, ({ status }) => status === node.status);
+  const { render } = _.find(renderers, ({ status }) => status === node.status);
   return render(node);
 }).join('\n');
 
