@@ -3,7 +3,6 @@ import _ from 'lodash';
 import path from 'path';
 import yaml from 'js-yaml';
 import ini from 'ini';
-// import Node from './Node';
 
 const parsers = {
   '.json': JSON.parse,
@@ -11,82 +10,115 @@ const parsers = {
   '.ini': ini.parse,
 };
 
+const renderObject = obj =>
+  `{\n${Object.keys(obj).map(key => `${' '.repeat(8)}${key}: ${obj[key]}`)
+    .join('\n')}\n${' '.repeat(4)}}`;
+
+function Node(key) {
+  this.key = key;
+
+  this.render = function render() {
+    return `${this.key}`;
+  };
+}
+function Inserted(key, valueBefore = 'nothing', valueAfter) {
+  Node.apply(this, [key]);
+  this.before = valueBefore;
+  this.after = valueAfter;
+  this.prefix = '+ ';
+  this.render = function render() {
+    const value = this.after;
+    const valueAsStr = (value instanceof Object && !(value instanceof Array)) ?
+      renderObject(value) : value;
+    return `${' '.repeat(2)}${this.prefix}${this.key}: ${valueAsStr}`;
+  };
+}
+function Deleted(key, valueBefore, valueAfter = 'nothing') {
+  Node.apply(this, [key]);
+  this.before = valueBefore;
+  this.after = valueAfter;
+  this.prefix = '- ';
+  this.render = function render() {
+    const value = this.before;
+    const valueAsStr = (value instanceof Object && !(value instanceof Array)) ?
+      renderObject(value) : value;
+    return `${' '.repeat(2)}${this.prefix}${this.key}: ${valueAsStr}`;
+  };
+}
+function Changed(key, valueBefore, valueAfter) {
+  Node.apply(this, [key]);
+  this.before = valueBefore;
+  this.after = valueAfter;
+  this.prefixMinus = '- ';
+  this.prefixPlus = '+ ';
+  this.render = function render() {
+    return [`${' '.repeat(2)}${this.prefixMinus}${this.key}: ${this.before}`,
+      `${' '.repeat(2)}${this.prefixPlus}${this.key}: ${this.after}`].join('\n');
+  };
+}
+function Unchanged(key, valueBefore, valueAfter) {
+  Node.apply(this, [key]);
+  this.before = valueBefore;
+  this.after = valueAfter;
+  this.prefix = '  ';
+  this.render = function render() {
+    return `${' '.repeat(2)}${this.prefix}${this.key}: ${this.before}`;
+  };
+}
+function Nested(key) {
+  Node.apply(this, [key]);
+  this.prefix = '  ';
+  this.render = function render() {
+    return `${' '.repeat(2)}${this.prefix}${this.key}: test`;
+  };
+}
+
 const isObject = value => value instanceof Object;
 
-const statuses = [
+const typesOfNode = [
   {
-    status: 'hasChildren',
+    type: 'nested',
     check: (before, after) => isObject(before) && isObject(after) &&
       !(before instanceof Array && after instanceof Array),
+    getBuilder: () => Nested,
   },
   {
-    status: 'inserted',
+    type: 'inserted',
     check: (before, after) => !before && after,
-    build: (valueBefore, valueAfter) => valueAfter,
-  },
-  {
-    status: 'deleted',
-    check: (before, after) => before && !after,
-    build: valueBefore => valueBefore,
-  },
-  {
-    status: 'changed',
-    check: (before, after) => before !== after,
-    build: (valueBefore, valueAfter) => ({
-      before: valueBefore,
-      after: valueAfter,
-    }),
-  },
-  {
-    status: 'unchanged',
-    check: (before, after) => before === after,
-    build: valueBefore => valueBefore,
-  },
-];
+    getBuilder: () => Inserted,
 
-const renderers = [
-  // {
-  //   status: 'hasChildren',
-  //   render: (node, func) => `    ${node.key}: ${func(node.children)}`,
-  // },
-  {
-    status: 'inserted',
-    render: node => `  + ${node.key}: ${node.value}`,
   },
   {
-    status: 'deleted',
-    render: node => `  - ${node.key}: ${node.value}`,
+    type: 'deleted',
+    check: (before, after) => before && !after,
+    getBuilder: () => Deleted,
   },
   {
-    status: 'changed',
-    render: node =>
-      `  + ${node.key}: ${node.value.after}\n  - ${node.key}: ${node.value.before}`,
+    type: 'changed',
+    check: (before, after) => before !== after,
+    getBuilder: () => Changed,
   },
   {
-    status: 'unchanged',
-    render: node => `    ${node.key}: ${node.value}`,
+    type: 'unchanged',
+    check: (before, after) => before === after,
+    getBuilder: () => Unchanged,
   },
 ];
 
 const buildAst = (objectBefore, objectAfter) => {
   const unitedKeys = _.union(Object.keys(objectBefore), Object.keys(objectAfter));
   return unitedKeys.map((key) => {
-    const { status, build } = _.find(statuses, ({ check }) =>
-      check(objectBefore[key], objectAfter[key]));
-    if (status === 'hasChildren') {
-      const children = buildAst(objectBefore[key], objectAfter[key]);
-      return { key, status, children };
-    }
-    const value = build(objectBefore[key], objectAfter[key]);
-    return { key, status, value };
+    const nodeBefore = objectBefore[key];
+    const nodeAfter = objectAfter[key];
+    const { getBuilder } = _.find(typesOfNode, ({ check }) =>
+      check(nodeBefore, nodeAfter));
+    const Builder = getBuilder();
+    return new Builder(key, nodeBefore, nodeAfter);
   });
 };
 
 const renderAst = (ast) => {
-  const string = ast.map((node) => {
-    const { render } = _.find(renderers, ({ status }) => status === node.status);
-    return render(node);
-  }).join('\n');
+  const string = ast.map(node => node.render()).join('\n');
   return `{\n${string}\n}`;
 };
 
