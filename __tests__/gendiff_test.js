@@ -9,7 +9,8 @@ test('gendiff step2 (json)', () => {
   + timeout: 20
   - proxy: 123.234.53.22
   + verbose: true
-}`);
+}
+`);
 });
 
 test('gendiff step3 (yaml)', () => {
@@ -20,7 +21,8 @@ test('gendiff step3 (yaml)', () => {
   + node_js: stable
   - script3: make start
   + script: make lint test
-}`);
+}
+`);
 });
 
 test('gendiff step4 (ini)', () => {
@@ -31,7 +33,8 @@ test('gendiff step4 (ini)', () => {
   + timeout: 20
     proxy: 123.234.53.22
   + verbose: true
-}`);
+}
+`);
 });
 
 test('gendiff step5 (ast)', () => {
