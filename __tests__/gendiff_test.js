@@ -1,3 +1,4 @@
+import fs from 'fs';
 import gendiff from '../src';
 
 test('gendiff step2 (json)', () => {
@@ -35,37 +36,5 @@ test('gendiff step4 (ini)', () => {
 
 test('gendiff step5 (ast)', () => {
   expect(gendiff('__tests__/__fixtures__/before_tree.json', '__tests__/__fixtures__/after_tree.json'))
-    .toBe(`{
-    common: {
-        setting1: Value 1
-      - setting2: 200
-      - setting3: true
-      + setting3: {
-            key: value
-        }
-        setting6: {
-            key: value
-          + ops: vops
-        }
-      + setting4: blah blah
-      + setting5: {
-            key5: value5
-        }
-    }
-    group1: {
-      + baz: bars
-      - baz: bas
-        foo: bar
-      - nest: {
-            key: value
-        }
-      + nest: str
-    }
-  - group2: {
-        abc: 12345
-    }
-  + group3: {
-        fee: 100500
-    }
-}`);
+    .toBe(fs.readFileSync('__tests__/__fixtures__/diff_step5.out', 'utf8'));
 });

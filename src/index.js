@@ -10,69 +10,6 @@ const parsers = {
   '.ini': ini.parse,
 };
 
-const renderObject = obj =>
-  `{\n${Object.keys(obj).map(key => `${' '.repeat(8)}${key}: ${obj[key]}`)
-    .join('\n')}\n${' '.repeat(4)}}`;
-
-function Node(key) {
-  this.key = key;
-
-  this.render = function render() {
-    return `${this.key}`;
-  };
-}
-function Inserted(key, valueBefore = 'nothing', valueAfter) {
-  Node.apply(this, [key]);
-  this.before = valueBefore;
-  this.after = valueAfter;
-  this.prefix = '+ ';
-  this.render = function render() {
-    const value = this.after;
-    const valueAsStr = (value instanceof Object && !(value instanceof Array)) ?
-      renderObject(value) : value;
-    return `${' '.repeat(2)}${this.prefix}${this.key}: ${valueAsStr}`;
-  };
-}
-function Deleted(key, valueBefore, valueAfter = 'nothing') {
-  Node.apply(this, [key]);
-  this.before = valueBefore;
-  this.after = valueAfter;
-  this.prefix = '- ';
-  this.render = function render() {
-    const value = this.before;
-    const valueAsStr = (value instanceof Object && !(value instanceof Array)) ?
-      renderObject(value) : value;
-    return `${' '.repeat(2)}${this.prefix}${this.key}: ${valueAsStr}`;
-  };
-}
-function Changed(key, valueBefore, valueAfter) {
-  Node.apply(this, [key]);
-  this.before = valueBefore;
-  this.after = valueAfter;
-  this.prefixMinus = '- ';
-  this.prefixPlus = '+ ';
-  this.render = function render() {
-    return [`${' '.repeat(2)}${this.prefixMinus}${this.key}: ${this.before}`,
-      `${' '.repeat(2)}${this.prefixPlus}${this.key}: ${this.after}`].join('\n');
-  };
-}
-function Unchanged(key, valueBefore, valueAfter) {
-  Node.apply(this, [key]);
-  this.before = valueBefore;
-  this.after = valueAfter;
-  this.prefix = '  ';
-  this.render = function render() {
-    return `${' '.repeat(2)}${this.prefix}${this.key}: ${this.before}`;
-  };
-}
-function Nested(key) {
-  Node.apply(this, [key]);
-  this.prefix = '  ';
-  this.render = function render() {
-    return `${' '.repeat(2)}${this.prefix}${this.key}: test`;
-  };
-}
-
 const isObject = value => value instanceof Object;
 
 const typesOfNode = [
@@ -80,45 +17,56 @@ const typesOfNode = [
     type: 'nested',
     check: (before, after) => isObject(before) && isObject(after) &&
       !(before instanceof Array && after instanceof Array),
-    getBuilder: () => Nested,
+    getValue: () => '',
+    getChildren: (before, after, cons) => cons(before, after),
   },
   {
     type: 'inserted',
     check: (before, after) => !before && after,
-    getBuilder: () => Inserted,
-
+    getValue: (before, after) => after,
+    getChildren: () => [],
   },
   {
     type: 'deleted',
     check: (before, after) => before && !after,
-    getBuilder: () => Deleted,
+    getValue: before => before,
+    getChildren: () => [],
   },
   {
     type: 'changed',
     check: (before, after) => before !== after,
-    getBuilder: () => Changed,
+    getValue: () => '',
+    getChildren: () => [],
   },
   {
     type: 'unchanged',
     check: (before, after) => before === after,
-    getBuilder: () => Unchanged,
+    getValue: before => before,
+    getChildren: () => [],
   },
 ];
 
 const buildAst = (objectBefore, objectAfter) => {
   const unitedKeys = _.union(Object.keys(objectBefore), Object.keys(objectAfter));
-  return unitedKeys.map((key) => {
+  return _.flatten(unitedKeys.map((key) => {
     const nodeBefore = objectBefore[key];
     const nodeAfter = objectAfter[key];
-    const { getBuilder } = _.find(typesOfNode, ({ check }) =>
+    const { type, getValue, getChildren } = _.find(typesOfNode, ({ check }) =>
       check(nodeBefore, nodeAfter));
-    const Builder = getBuilder();
-    return new Builder(key, nodeBefore, nodeAfter);
-  });
+    const children = getChildren(nodeBefore, nodeAfter, buildAst);
+    if (type === 'changed') {
+      return [{ key, value: nodeBefore, children }, { key, value: nodeAfter, children }];
+    }
+    const value = getValue(nodeBefore, nodeAfter);
+    return { key, value, children };
+  }));
 };
 
 const renderAst = (ast) => {
-  const string = ast.map(node => node.render()).join('\n');
+  const string = ast.map((node) => {
+    const value = (node.value) ? node.value : renderAst(node.children);
+    return `${' '.repeat(4)}${node.key}: ${value}`;
+  }).join('\n');
   return `{\n${string}\n}`;
 };
 
@@ -130,5 +78,6 @@ export default (fileBefore, fileAfter) => {
   const parsedBefore = parsers[fileTypeBefore](contentBefore);
   const parsedAfter = parsers[fileTypeAfter](contentAfter);
   const ast = buildAst(parsedBefore, parsedAfter);
+  console.log(ast);
   return renderAst(ast);
 };
