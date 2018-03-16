@@ -31,6 +31,8 @@ export default {
     }).join('\n');
     return `{\n${astAsString}\n${' '.repeat(breaks - 2)}}`;
   },
+  // plain: (ast, breaks, renderAst) => {
+  // },
 };
 
 // renderers.default(node, breaks, renderAst)).join('\n');

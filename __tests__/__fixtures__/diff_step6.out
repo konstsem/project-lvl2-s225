@@ -1,0 +1,11 @@
+Property 'timeout' was updated. From '50' to '20'
+Property 'proxy' was removed
+Property 'common.setting4' was removed
+Property 'common.setting5' was removed
+Property 'common.setting2' was added with value: 200
+Property 'common.setting6.ops' was added with value: 'vops'
+Property 'common.sites' was added with value: 'hexlet.io'
+Property 'group1.baz' was updated. From 'bars' to 'bas'
+Property 'group3' was removed
+Property 'verbose' was added with value: true
+Property 'group2' was added with complex value

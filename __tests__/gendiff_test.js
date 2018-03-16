@@ -41,3 +41,8 @@ test('gendiff step5 (ast)', () => {
   expect(gendiff('__tests__/__fixtures__/before_tree.json', '__tests__/__fixtures__/after_tree.json'))
     .toBe(fs.readFileSync('__tests__/__fixtures__/diff_step5.out', 'utf8'));
 });
+
+test('gendiff step6 (flat format)', () => {
+  expect(gendiff('__tests__/__fixtures__/before_tree.json', '__tests__/__fixtures__/after_tree.json'))
+    .toBe(fs.readFileSync('__tests__/__fixtures__/diff_step6.out', 'utf8'));
+});
