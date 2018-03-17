@@ -1,6 +1,6 @@
 {
   "name": "gendiff_konstsem",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "description": "Second project by Hexlet (frontend)",
   "main": "dist/index.js",
   "bin": {

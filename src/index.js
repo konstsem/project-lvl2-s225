@@ -56,10 +56,10 @@ const buildAst = (objectBefore, objectAfter) => {
   });
 };
 
-const renderAst = (ast, breaks, format = 'default') =>
-  renderers[format](ast, breaks, renderAst);
+const renderAst = (ast, breaks, format = 'default', parentAsPrefix) =>
+  renderers[format](ast, breaks, renderAst, parentAsPrefix);
 
-export default (fileBefore, fileAfter) => {
+export default (fileBefore, fileAfter, format) => {
   const fileTypeBefore = path.extname(fileBefore);
   const fileTypeAfter = path.extname(fileAfter);
   const contentBefore = fs.readFileSync(fileBefore, 'utf8');
@@ -67,6 +67,5 @@ export default (fileBefore, fileAfter) => {
   const parsedBefore = parsers[fileTypeBefore](contentBefore);
   const parsedAfter = parsers[fileTypeAfter](contentAfter);
   const ast = buildAst(parsedBefore, parsedAfter);
-  const format = 'default';
   return `${renderAst(ast, 2, format)}\n`;
 };

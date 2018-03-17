@@ -18,7 +18,7 @@ const renderObj = (obj, breaks) => {
   return `{\n${result}\n${' '.repeat(breaks - 2)}}`;
 };
 
-const defaultRenderers = [
+export default [
   {
     check: type => type === 'nested',
     renderNode: (node, breaks, renderAst) =>
@@ -44,40 +44,3 @@ const defaultRenderers = [
     },
   },
 ];
-
-export default {
-  default: (ast, breaks, renderAst) => {
-    const astAsString = ast.map((node) => {
-      const { renderNode } = _.find(defaultRenderers, ({ check }) => check(node.type));
-      return renderNode(node, breaks, renderAst);
-    }).join('\n');
-    return `{\n${astAsString}\n${' '.repeat(breaks - 2)}}`;
-  },
-  // plain: (ast, breaks, renderAst) => {
-  // },
-};
-
-// renderers.default(node, breaks, renderAst)).join('\n');
-
-// const renderers = [
-//   {
-//     type: () => 'nested',
-//     buildStr: (node, breaks, func) =>
-//       `${' '.repeat(breaks)}${' '.repeat(2)}${node.key}: ${func(node.children, breaks * 3)}`,
-//   },
-//   {
-//     type: () => 'inserted',
-//     buildStr: (node, breaks) =>
-//       `${' '.repeat(breaks)}+ ${node.key}: ${_.isObject(node.value)}`,
-//   },
-//   {
-//     type: () => 'deleted',
-//     buildStr: (node, breaks) =>
-//       `${' '.repeat(breaks)}- ${node.key}: ${node.value}`,
-//   },
-//   {
-//     type: () => 'unchanged',
-//     buildStr: (node, breaks) =>
-//       `${' '.repeat(breaks)}${' '.repeat(2)}${node.key}: ${node.value}`,
-//   },
-// ];
