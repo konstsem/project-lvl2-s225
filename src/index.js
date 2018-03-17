@@ -35,7 +35,12 @@ const typesOfNode = [
     type: 'updated',
     check: (before, after) => before !== after,
     buildNode: (key, type, before, after) =>
-      ({ key, type: 'updated', value: { before, after } }),
+      ({
+        key,
+        type: 'updated',
+        value: [{ key, type: 'deleted', value: before },
+          { key, type: 'inserted', value: after }],
+      }),
   },
   {
     type: 'unchanged',
@@ -56,8 +61,8 @@ const buildAst = (objectBefore, objectAfter) => {
   });
 };
 
-const renderAst = (ast, breaks, format = 'default', parentAsPrefix) =>
-  renderers[format](ast, breaks, renderAst, parentAsPrefix);
+const renderAst = (ast, level, format = 'default', parentAsPrefix) =>
+  renderers[format](ast, level, renderAst, parentAsPrefix);
 
 export default (fileBefore, fileAfter, format) => {
   const fileTypeBefore = path.extname(fileBefore);
@@ -67,5 +72,6 @@ export default (fileBefore, fileAfter, format) => {
   const parsedBefore = parsers[fileTypeBefore](contentBefore);
   const parsedAfter = parsers[fileTypeAfter](contentAfter);
   const ast = buildAst(parsedBefore, parsedAfter);
-  return `${renderAst(ast, 2, format)}\n`;
+  const level = 0;
+  return renderAst(ast, level, format);
 };

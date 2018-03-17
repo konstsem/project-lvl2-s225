@@ -9,38 +9,48 @@ const getPrefix = (type) => {
   return '  ';
 };
 
-const renderObj = (obj, breaks) => {
+const renderObj = (obj, level) => {
   const result = Object.keys(obj).map((key) => {
     const string = _.isObject(key) ?
-      renderObj(key) : `${' '.repeat(breaks + 2)}${key}: ${obj[key]}`;
+      renderObj(key) : `${' '.repeat((level * 4) + 4)}${key}: ${obj[key]}`;
     return string;
-  }).join('\n');
-  return `{\n${result}\n${' '.repeat(breaks - 2)}}`;
+  });
+  return ['{', ...result, `${' '.repeat(level * 4)}}`].join('\n');
 };
 
-export default [
+const renderers = [
   {
     check: type => type === 'nested',
-    renderNode: (node, breaks, renderAst) =>
-      `${' '.repeat(breaks)}${getPrefix(node.type)}${node.key}: ${renderAst(node.children, breaks + 4)}`,
+    renderNode: (node, level, renderAst) =>
+      `${' '.repeat((level * 4) + 2)}${getPrefix(node.type)}${node.key}: ${renderAst(node.children, level + 1)}`,
   },
   {
     check: type => type === 'inserted' || type === 'deleted' || type === 'unchanged',
-    renderNode: (node, breaks) => {
+    renderNode: (node, level) => {
       const valueAsStr = (_.isObject(node.value) && !_.isArray(node.value)) ?
-        renderObj(node.value, breaks + 4) : node.value;
-      return `${' '.repeat(breaks)}${getPrefix(node.type)}${node.key}: ${valueAsStr}`;
+        renderObj(node.value, level + 1) : node.value;
+      return `${' '.repeat((level * 4) + 2)}${getPrefix(node.type)}${node.key}: ${valueAsStr}`;
     },
   },
   {
     check: type => type === 'updated',
-    renderNode: (node, breaks) => {
-      const beforeAsStr = (_.isObject(node.value.before) && !_.isArray(node.value.before)) ?
-        renderObj(node.value.before, breaks + 4) : node.value.before;
-      const afterAsStr = (_.isObject(node.value.after) && !_.isArray(node.value.after)) ?
-        renderObj(node.value.after, breaks + 4) : node.value.after;
-      return [`${' '.repeat(breaks)}${getPrefix('deleted')}${node.key}: ${beforeAsStr}`,
-        `${' '.repeat(breaks)}${getPrefix('inserted')}${node.key}: ${afterAsStr}`].join('\n');
+    renderNode: (node, level, renderAst) => {
+      const nodeAsStr = node.value.map((item) => {
+        const { renderNode } = _.find(renderers, ({ check }) => check(item.type));
+        return renderNode(item, level, renderAst, 'default');
+      });
+      return nodeAsStr.join('\n');
     },
+    // renderAst(node.value, level),
   },
 ];
+
+const defaultRenderer = (ast, level, renderAst) => {
+  const astAsString = ast.map((node) => {
+    const { renderNode } = _.find(renderers, ({ check }) => check(node.type));
+    return renderNode(node, level, renderAst, 'default');
+  });
+  return ['{', ...astAsString, `${' '.repeat(level * 4)}}`].join('\n');
+};
+
+export default defaultRenderer;
