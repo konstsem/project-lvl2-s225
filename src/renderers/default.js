@@ -34,13 +34,21 @@ const renderers = [
   },
   {
     check: type => type === 'updated',
-    renderNode: (node, level, renderAst) => {
-      const nodeAsStr = node.value.map((item) => {
-        const { renderNode } = _.find(renderers, ({ check }) => check(item.type));
-        return renderNode(item, level, renderAst, 'default');
-      });
-      return nodeAsStr.join('\n');
+    renderNode: (node, level) => {
+      const valueBeforeAsStr = (_.isObject(node.valueBefore) && !_.isArray(node.valueBefore)) ?
+        renderObj(node.valueBefore, level + 1) : node.valueBefore;
+      const valueAfterAsStr = (_.isObject(node.valueAfter) && !_.isArray(node.valueAfter)) ?
+        renderObj(node.valueAfter, level + 1) : node.valueAfter;
+      return [`${' '.repeat((level * 4) + 2)}${getPrefix('deleted')}${node.key}: ${valueBeforeAsStr}`,
+        `${' '.repeat((level * 4) + 2)}${getPrefix('inserted')}${node.key}: ${valueAfterAsStr}`].join('\n');
     },
+    // {
+    // const nodeAsStr = node.value.map((item) => {
+    //   const { renderNode } = _.find(renderers, ({ check }) => check(item.type));
+    //   return renderNode(item, level, renderAst, 'default');
+    // });
+    // return nodeAsStr.join('\n');
+    // },
     // renderAst(node.value, level),
   },
 ];

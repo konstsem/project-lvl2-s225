@@ -38,9 +38,15 @@ const typesOfNode = [
       ({
         key,
         type: 'updated',
-        value: [{ key, type: 'deleted', value: before },
-          { key, type: 'inserted', value: after }],
+        valueBefore: before,
+        valueAfter: after,
       }),
+    // ({
+    //   key,
+    //   type: 'updated',
+    //   value: [{ key, type: 'deleted', value: before },
+    //     { key, type: 'inserted', value: after }],
+    // }),
   },
   {
     type: 'unchanged',
