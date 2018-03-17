@@ -3,7 +3,7 @@ import _ from 'lodash';
 import path from 'path';
 import yaml from 'js-yaml';
 import ini from 'ini';
-import renderers from './renderers';
+import getRenderer from './renderers';
 
 const parsers = {
   '.json': JSON.parse,
@@ -67,8 +67,10 @@ const buildAst = (objectBefore, objectAfter) => {
   });
 };
 
-const renderAst = (ast, level, format = 'default', parentAsPrefix) =>
-  renderers[format](ast, level, renderAst, parentAsPrefix);
+const renderAst = (ast, format = 'default') => {
+  const renderer = getRenderer[format]();
+  return renderer(ast);
+};
 
 export default (fileBefore, fileAfter, format) => {
   const fileTypeBefore = path.extname(fileBefore);
@@ -78,6 +80,5 @@ export default (fileBefore, fileAfter, format) => {
   const parsedBefore = parsers[fileTypeBefore](contentBefore);
   const parsedAfter = parsers[fileTypeAfter](contentAfter);
   const ast = buildAst(parsedBefore, parsedAfter);
-  const level = 0;
-  return renderAst(ast, level, format);
+  return `${renderAst(ast, format)}\n`;
 };

@@ -1,14 +1,5 @@
 import _ from 'lodash';
 
-const getPrefix = (type) => {
-  if (type === 'inserted') {
-    return '+ ';
-  } else if (type === 'deleted') {
-    return '- ';
-  }
-  return '  ';
-};
-
 const renderObj = (obj, level) => {
   const result = Object.keys(obj).map((key) => {
     const string = _.isObject(key) ?
@@ -22,14 +13,30 @@ const renderers = [
   {
     check: type => type === 'nested',
     renderNode: (node, level, renderAst) =>
-      `${' '.repeat((level * 4) + 2)}${getPrefix(node.type)}${node.key}: ${renderAst(node.children, level + 1)}`,
+      `${' '.repeat((level * 4) + 4)}${node.key}: ${renderAst(node.children, level + 1)}`,
   },
   {
-    check: type => type === 'inserted' || type === 'deleted' || type === 'unchanged',
+    check: type => type === 'unchanged',
     renderNode: (node, level) => {
       const valueAsStr = (_.isObject(node.value) && !_.isArray(node.value)) ?
         renderObj(node.value, level + 1) : node.value;
-      return `${' '.repeat((level * 4) + 2)}${getPrefix(node.type)}${node.key}: ${valueAsStr}`;
+      return `${' '.repeat((level * 4) + 4)}${node.key}: ${valueAsStr}`;
+    },
+  },
+  {
+    check: type => type === 'inserted',
+    renderNode: (node, level) => {
+      const valueAsStr = (_.isObject(node.value) && !_.isArray(node.value)) ?
+        renderObj(node.value, level + 1) : node.value;
+      return `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAsStr}`;
+    },
+  },
+  {
+    check: type => type === 'deleted',
+    renderNode: (node, level) => {
+      const valueAsStr = (_.isObject(node.value) && !_.isArray(node.value)) ?
+        renderObj(node.value, level + 1) : node.value;
+      return `${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueAsStr}`;
     },
   },
   {
@@ -39,24 +46,16 @@ const renderers = [
         renderObj(node.valueBefore, level + 1) : node.valueBefore;
       const valueAfterAsStr = (_.isObject(node.valueAfter) && !_.isArray(node.valueAfter)) ?
         renderObj(node.valueAfter, level + 1) : node.valueAfter;
-      return [`${' '.repeat((level * 4) + 2)}${getPrefix('deleted')}${node.key}: ${valueBeforeAsStr}`,
-        `${' '.repeat((level * 4) + 2)}${getPrefix('inserted')}${node.key}: ${valueAfterAsStr}`].join('\n');
+      return [`${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueBeforeAsStr}`,
+        `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAfterAsStr}`].join('\n');
     },
-    // {
-    // const nodeAsStr = node.value.map((item) => {
-    //   const { renderNode } = _.find(renderers, ({ check }) => check(item.type));
-    //   return renderNode(item, level, renderAst, 'default');
-    // });
-    // return nodeAsStr.join('\n');
-    // },
-    // renderAst(node.value, level),
   },
 ];
 
-const defaultRenderer = (ast, level, renderAst) => {
+const defaultRenderer = (ast, level = 0) => {
   const astAsString = ast.map((node) => {
     const { renderNode } = _.find(renderers, ({ check }) => check(node.type));
-    return renderNode(node, level, renderAst, 'default');
+    return renderNode(node, level, defaultRenderer);
   });
   return ['{', ...astAsString, `${' '.repeat(level * 4)}}`].join('\n');
 };
