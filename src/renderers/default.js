@@ -9,40 +9,46 @@ const renderObj = (obj, level) => {
   return ['{', ...result, `${' '.repeat(level * 4)}}`].join('\n');
 };
 
+const getValueAsStr = (value, level) =>
+  ((_.isPlainObject(value)) ? renderObj(value, level + 1) : value);
+
+const getOut = (prefix, key, value) => `${prefix}${key}: ${value}`;
+
 const renderers = {
-  nested: (node, level, renderAst) =>
-    `${' '.repeat((level * 4) + 4)}${node.key}: ${renderAst(node.children, level + 1)}`,
+  nested: (node, level, renderAst) => {
+    const prefix = ' '.repeat((level * 4) + 4);
+    const value = renderAst(node.children, level + 1);
+    return getOut(prefix, node.key, value);
+  },
   unchanged: (node, level) => {
-    const valueAsStr = (_.isPlainObject(node.value)) ?
-      renderObj(node.value, level + 1) : node.value;
-    return `${' '.repeat((level * 4) + 4)}${node.key}: ${valueAsStr}`;
+    const prefix = ' '.repeat((level * 4) + 4);
+    const value = getValueAsStr(node.value, level);
+    return getOut(prefix, node.key, value);
   },
   inserted: (node, level) => {
-    const valueAsStr = (_.isPlainObject(node.value)) ?
-      renderObj(node.value, level + 1) : node.value;
-    return `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAsStr}`;
+    const prefix = `${' '.repeat((level * 4) + 2)}+ `;
+    const value = getValueAsStr(node.value, level);
+    return getOut(prefix, node.key, value);
   },
   deleted: (node, level) => {
-    const valueAsStr = (_.isPlainObject(node.value)) ?
-      renderObj(node.value, level + 1) : node.value;
-    return `${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueAsStr}`;
+    const prefix = `${' '.repeat((level * 4) + 2)}- `;
+    const value = getValueAsStr(node.value, level);
+    return getOut(prefix, node.key, value);
   },
   updated: (node, level) => {
-    const valueBeforeAsStr = (_.isPlainObject(node.valueBefore)) ?
-      renderObj(node.valueBefore, level + 1) : node.valueBefore;
-    const valueAfterAsStr = (_.isPlainObject(node.valueAfter)) ?
-      renderObj(node.valueAfter, level + 1) : node.valueAfter;
-    return [`${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueBeforeAsStr}`,
-      `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAfterAsStr}`].join('\n');
+    const valueBeforeAsStr = getValueAsStr(node.valueBefore, level);
+    const valueAfterAsStr = getValueAsStr(node.valueAfter, level);
+    return [getOut(`${' '.repeat((level * 4) + 2)}- `, node.key, valueBeforeAsStr),
+      getOut(`${' '.repeat((level * 4) + 2)}+ `, node.key, valueAfterAsStr)].join('\n');
   },
 };
 
-const defaultRenderer = (ast, level = 0) => {
+const getDefaultRenderer = (ast, level = 0) => {
   const astAsString = ast.map((node) => {
     const rendererNode = renderers[node.type];
-    return rendererNode(node, level, defaultRenderer);
+    return rendererNode(node, level, getDefaultRenderer);
   });
   return ['{', ...astAsString, `${' '.repeat(level * 4)}}`].join('\n');
 };
 
-export default defaultRenderer;
+export default getDefaultRenderer;
