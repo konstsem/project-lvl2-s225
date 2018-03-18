@@ -61,10 +61,10 @@ const buildAst = (objectBefore, objectAfter) => {
 };
 
 const renderAst = (ast, format = 'default') => {
-  const renderer = getRenderer[format]();
-  if (!renderer) {
+  if (!getRenderer[format]) {
     throw new Error(`unkown format: ${format}`);
   }
+  const renderer = getRenderer[format]();
   return renderer(ast);
 };
 
