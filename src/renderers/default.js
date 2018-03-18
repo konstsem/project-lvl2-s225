@@ -9,53 +9,38 @@ const renderObj = (obj, level) => {
   return ['{', ...result, `${' '.repeat(level * 4)}}`].join('\n');
 };
 
-const renderers = [
-  {
-    check: type => type === 'nested',
-    renderNode: (node, level, renderAst) =>
-      `${' '.repeat((level * 4) + 4)}${node.key}: ${renderAst(node.children, level + 1)}`,
+const renderers = {
+  nested: (node, level, renderAst) =>
+    `${' '.repeat((level * 4) + 4)}${node.key}: ${renderAst(node.children, level + 1)}`,
+  unchanged: (node, level) => {
+    const valueAsStr = (_.isPlainObject(node.value)) ?
+      renderObj(node.value, level + 1) : node.value;
+    return `${' '.repeat((level * 4) + 4)}${node.key}: ${valueAsStr}`;
   },
-  {
-    check: type => type === 'unchanged',
-    renderNode: (node, level) => {
-      const valueAsStr = (_.isObject(node.value) && !_.isArray(node.value)) ?
-        renderObj(node.value, level + 1) : node.value;
-      return `${' '.repeat((level * 4) + 4)}${node.key}: ${valueAsStr}`;
-    },
+  inserted: (node, level) => {
+    const valueAsStr = (_.isPlainObject(node.value)) ?
+      renderObj(node.value, level + 1) : node.value;
+    return `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAsStr}`;
   },
-  {
-    check: type => type === 'inserted',
-    renderNode: (node, level) => {
-      const valueAsStr = (_.isObject(node.value) && !_.isArray(node.value)) ?
-        renderObj(node.value, level + 1) : node.value;
-      return `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAsStr}`;
-    },
+  deleted: (node, level) => {
+    const valueAsStr = (_.isPlainObject(node.value)) ?
+      renderObj(node.value, level + 1) : node.value;
+    return `${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueAsStr}`;
   },
-  {
-    check: type => type === 'deleted',
-    renderNode: (node, level) => {
-      const valueAsStr = (_.isObject(node.value) && !_.isArray(node.value)) ?
-        renderObj(node.value, level + 1) : node.value;
-      return `${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueAsStr}`;
-    },
+  updated: (node, level) => {
+    const valueBeforeAsStr = (_.isPlainObject(node.valueBefore)) ?
+      renderObj(node.valueBefore, level + 1) : node.valueBefore;
+    const valueAfterAsStr = (_.isPlainObject(node.valueAfter)) ?
+      renderObj(node.valueAfter, level + 1) : node.valueAfter;
+    return [`${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueBeforeAsStr}`,
+      `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAfterAsStr}`].join('\n');
   },
-  {
-    check: type => type === 'updated',
-    renderNode: (node, level) => {
-      const valueBeforeAsStr = (_.isObject(node.valueBefore) && !_.isArray(node.valueBefore)) ?
-        renderObj(node.valueBefore, level + 1) : node.valueBefore;
-      const valueAfterAsStr = (_.isObject(node.valueAfter) && !_.isArray(node.valueAfter)) ?
-        renderObj(node.valueAfter, level + 1) : node.valueAfter;
-      return [`${' '.repeat((level * 4) + 2)}- ${node.key}: ${valueBeforeAsStr}`,
-        `${' '.repeat((level * 4) + 2)}+ ${node.key}: ${valueAfterAsStr}`].join('\n');
-    },
-  },
-];
+};
 
 const defaultRenderer = (ast, level = 0) => {
   const astAsString = ast.map((node) => {
-    const { renderNode } = _.find(renderers, ({ check }) => check(node.type));
-    return renderNode(node, level, defaultRenderer);
+    const rendererNode = renderers[node.type];
+    return rendererNode(node, level, defaultRenderer);
   });
   return ['{', ...astAsString, `${' '.repeat(level * 4)}}`].join('\n');
 };

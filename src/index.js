@@ -7,8 +7,7 @@ import getParser from './parsers';
 const typesOfNode = [
   {
     type: 'nested',
-    check: (before, after) => _.isObject(before) && _.isObject(after) &&
-      !(before instanceof Array && after instanceof Array),
+    check: (before, after) => _.isPlainObject(before) && _.isPlainObject(after),
     buildNode: (key, type, before, after, func) =>
       ({ key, type: 'nested', children: func(before, after) }),
   },
@@ -61,10 +60,7 @@ const buildAst = (objectBefore, objectAfter) => {
 };
 
 const renderAst = (ast, format = 'default') => {
-  if (!getRenderer[format]) {
-    throw new Error(`unkown format: ${format}`);
-  }
-  const renderer = getRenderer[format]();
+  const renderer = getRenderer(format);
   return renderer(ast);
 };
 
@@ -73,8 +69,8 @@ export default (fileBefore, fileAfter, format) => {
   const fileTypeAfter = path.extname(fileAfter);
   const contentBefore = fs.readFileSync(fileBefore, 'utf8');
   const contentAfter = fs.readFileSync(fileAfter, 'utf8');
-  const parsedBefore = getParser[fileTypeBefore](contentBefore);
-  const parsedAfter = getParser[fileTypeAfter](contentAfter);
+  const parsedBefore = getParser(fileTypeBefore)(contentBefore);
+  const parsedAfter = getParser(fileTypeAfter)(contentAfter);
   const ast = buildAst(parsedBefore, parsedAfter);
   return `${renderAst(ast, format)}\n`;
 };
