@@ -1,15 +1,8 @@
 import fs from 'fs';
 import _ from 'lodash';
 import path from 'path';
-import yaml from 'js-yaml';
-import ini from 'ini';
 import getRenderer from './renderers';
-
-const parsers = {
-  '.json': JSON.parse,
-  '.yaml': yaml.safeLoad,
-  '.ini': ini.parse,
-};
+import getParser from './parsers';
 
 const typesOfNode = [
   {
@@ -69,6 +62,9 @@ const buildAst = (objectBefore, objectAfter) => {
 
 const renderAst = (ast, format = 'default') => {
   const renderer = getRenderer[format]();
+  if (!renderer) {
+    throw new Error(`unkown format: ${format}`);
+  }
   return renderer(ast);
 };
 
@@ -77,8 +73,8 @@ export default (fileBefore, fileAfter, format) => {
   const fileTypeAfter = path.extname(fileAfter);
   const contentBefore = fs.readFileSync(fileBefore, 'utf8');
   const contentAfter = fs.readFileSync(fileAfter, 'utf8');
-  const parsedBefore = parsers[fileTypeBefore](contentBefore);
-  const parsedAfter = parsers[fileTypeAfter](contentAfter);
+  const parsedBefore = getParser[fileTypeBefore](contentBefore);
+  const parsedAfter = getParser[fileTypeAfter](contentAfter);
   const ast = buildAst(parsedBefore, parsedAfter);
   return `${renderAst(ast, format)}\n`;
 };
