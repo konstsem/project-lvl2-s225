@@ -1,4 +1,4 @@
-export default ast => JSON.stringify(ast);
+export default ast => JSON.stringify(ast, null, ' ');
 
 // import _ from 'lodash';
 //

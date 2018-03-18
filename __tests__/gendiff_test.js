@@ -47,8 +47,7 @@ test('gendiff step6 (flat format)', () => {
     .toBe(fs.readFileSync('__tests__/__fixtures__/diff_step6.out', 'utf8'));
 });
 
-// test('gendiff step7 (json format)', () => {
-//   expect(gendiff('__tests__/__fixtures__/before_tree.json',
-// '__tests__/__fixtures__/after_tree.json', 'json'))
-//     .toBe(fs.readFileSync('__tests__/__fixtures__/diff_step7.out', 'utf8'));
-// });
+test('gendiff step7 (json format)', () => {
+  expect(gendiff('__tests__/__fixtures__/before_tree.json', '__tests__/__fixtures__/after_tree.json', 'json'))
+    .toBe(fs.readFileSync('__tests__/__fixtures__/diff_step7.out', 'utf8'));
+});
