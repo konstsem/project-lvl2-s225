@@ -39,16 +39,17 @@ const renderers = {
     const valueBeforeAsStr = getValueAsStr(node.valueBefore, level);
     const valueAfterAsStr = getValueAsStr(node.valueAfter, level);
     return [getOut(`${' '.repeat((level * 4) + 2)}- `, node.key, valueBeforeAsStr),
-      getOut(`${' '.repeat((level * 4) + 2)}+ `, node.key, valueAfterAsStr)].join('\n');
+      getOut(`${' '.repeat((level * 4) + 2)}+ `, node.key, valueAfterAsStr)];
   },
 };
 
 const getDefaultRenderer = (ast, level = 0) => {
-  const astAsString = ast.map((node) => {
+  const astAsArray = ast.map((node) => {
     const rendererNode = renderers[node.type];
     return rendererNode(node, level, getDefaultRenderer);
   });
-  return ['{', ...astAsString, `${' '.repeat(level * 4)}}`].join('\n');
+  const flat = _.flatten(astAsArray);
+  return ['{', ...flat, `${' '.repeat(level * 4)}}`].join('\n');
 };
 
 export default getDefaultRenderer;
